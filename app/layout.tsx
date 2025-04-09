@@ -3,7 +3,7 @@ import { Inter as FontSans } from "next/font/google";
 import { Fira_Code as FontMono } from "next/font/google"; // Changed to Fira_Code
 import { ThemeProvider } from "@/components/theme-provider";
 import BackgroundPaths from "@/components/animated-background";
-
+import { Analytics } from "@vercel/analytics/react"
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
