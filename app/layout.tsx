@@ -2,7 +2,7 @@ import "./globals.css";
 import { Inter as FontSans } from "next/font/google";
 import { Fira_Code as FontMono } from "next/font/google"; // Changed to Fira_Code
 import { ThemeProvider } from "@/components/theme-provider";
-
+import BackgroundPaths from "@/components/animated-background";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -37,6 +37,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <BackgroundPaths />
           {children}
         </ThemeProvider>
       </body>
