@@ -12,13 +12,16 @@ import {
 import { Code, ChevronUp, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useGetCryptosQuery } from "@/app/services/cryptoApi"
-import { useGetStatsQuery } from "@/app/services/cryptoApi"
+import { useGetCryptosQuery, useGetStatsQuery } from "@/app/services/cryptoApi"
+import { useGetExchangesQuery } from "@/app/services/exchangeApi"
+import { useGetCryptoNewsQuery } from "@/app/services/cryptoNewsApi"
 
 export function DebugButton() {
   const [activeTab, setActiveTab] = useState<string>("crypto")
   const { data: cryptoData } = useGetCryptosQuery(10)
   const { data: statsData } = useGetStatsQuery({})
+  const { data: exchangeData } = useGetExchangesQuery(undefined)
+  const { data: newsData } = useGetCryptoNewsQuery({ newsCategory: 'cryptocurrency', count: 5 })
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   if (process.env.NODE_ENV !== "development") {
@@ -34,7 +37,9 @@ export function DebugButton() {
 
   const dataSources = {
     crypto: { title: "Crypto API Data", data: cryptoData },
-    stats: { title: "Stats API Data", data: statsData }
+    stats: { title: "Stats API Data", data: statsData },
+    exchanges: { title: "Exchange API Data", data: exchangeData },
+    news: { title: "News API Data", data: newsData }
   }
 
   return (
@@ -58,7 +63,7 @@ export function DebugButton() {
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex gap-2 mb-2">
+        <div className="flex flex-wrap gap-2 mb-2">
           {Object.entries(dataSources).map(([key, source]) => (
             <Button 
               key={key}
