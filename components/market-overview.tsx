@@ -11,9 +11,9 @@ export function MarketOverview() {
   const { data: stats, isFetching, error } = useGetStatsQuery({});
   
   // For debugging
-  // console.log('Stats API Response:', stats);
-  // console.log('Stats Loading:', isFetching);
-  // console.log('Stats Error:', error);
+  console.log('Stats API Response:', stats);
+  console.log('Stats Loading:', isFetching);
+  console.log('Stats Error:', error);
 
   const isLoading = isFetching || !stats;
 
@@ -62,7 +62,7 @@ export function MarketOverview() {
         </div>
       )}
       
-      {process.env.NODE_ENV === 'development' && (
+      {/* {/* {process.env.NODE_ENV === 'development' && (
         <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900 rounded border text-xs">
           <details>
             <summary className="cursor-pointer font-medium">Debug Stats API Response</summary>
@@ -70,8 +70,8 @@ export function MarketOverview() {
               {JSON.stringify(stats, null, 2)}
             </pre>
           </details>
-        </div>
-      )}
+        </div> 
+      )}*/}
     </section>
   )
 }

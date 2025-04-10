@@ -390,7 +390,7 @@ export function CryptocurrenciesList() {
       )}
       
       {/* Debug panel - only shown in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded border text-xs">
           <details>
             <summary className="cursor-pointer font-medium">Debug API Response</summary>
@@ -399,7 +399,7 @@ export function CryptocurrenciesList() {
             </pre>
           </details>
         </div>
-      )}
+      )} */}
     </div>
   )
 }
