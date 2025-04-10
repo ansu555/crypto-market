@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export const exchangeApi = createApi({
     reducerPath: 'exchangeApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: 'https://api.coingecko.com/api/v3',
+        baseUrl: process.env.NEXT_PUBLIC_EXCHANGE_API_URL,
     }),
     endpoints: (builder) => ({
         getExchanges: builder.query({

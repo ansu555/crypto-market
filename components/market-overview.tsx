@@ -62,7 +62,7 @@ export function MarketOverview() {
         </div>
       )}
       
-      {process.env.NODE_ENV === 'development' && (
+      {/* {/* {process.env.NODE_ENV === 'development' && (
         <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900 rounded border text-xs">
           <details>
             <summary className="cursor-pointer font-medium">Debug Stats API Response</summary>
@@ -70,8 +70,8 @@ export function MarketOverview() {
               {JSON.stringify(stats, null, 2)}
             </pre>
           </details>
-        </div>
-      )}
+        </div> 
+      )}*/}
     </section>
   )
 }

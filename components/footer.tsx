@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Github, Twitter, Linkedin } from "lucide-react"
+import { DebugButton } from "@/components/debug-button"
 
 export function Footer() {
   return (
@@ -28,19 +29,21 @@ export function Footer() {
             Contact
           </Link>
         </nav>
-        <div className="flex gap-4">
-          <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
+        <div className="flex gap-4 items-center">
+          <Link href="https://x.com/Dev_anik2003" className="text-muted-foreground hover:text-primary transition-colors">
             <Twitter className="h-5 w-5" />
             <span className="sr-only">Twitter</span>
           </Link>
-          <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
+          <Link href="https://github.com/ansu555/crypto-market" className="text-muted-foreground hover:text-primary transition-colors">
             <Github className="h-5 w-5" />
             <span className="sr-only">GitHub</span>
           </Link>
-          <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
+          <Link href="https://www.linkedin.com/in/anikdas2003/" className="text-muted-foreground hover:text-primary transition-colors">
             <Linkedin className="h-5 w-5" />
             <span className="sr-only">LinkedIn</span>
           </Link>
+          {/* Debug button - only shown in development */}
+          <DebugButton />
         </div>
       </div>
     </footer>

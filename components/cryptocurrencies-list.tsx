@@ -51,19 +51,29 @@ export function CryptocurrenciesList() {
   const mapApiDataToCryptos = (apiCoins: any[]): Cryptocurrency[] => {
     if (!apiCoins) return [];
     
-    return apiCoins.map(coin => ({
-      id: coin.uuid || coin.id || '',
-      rank: parseInt(coin.rank),
-      name: coin.name,
-      symbol: coin.symbol,
-      price: parseFloat(coin.price),
-      change1h: coin['1h']?.price_change_pct ? parseFloat(coin['1h'].price_change_pct) * 100 : 0,
-      change24h: parseFloat(coin.change),
-      change7d: coin['7d']?.price_change_pct ? parseFloat(coin['7d'].price_change_pct) * 100 : 0,
-      marketCap: parseInt(coin.marketCap),
-      volume24h: parseInt(coin['24hVolume'] || '0'),
-      circulatingSupply: parseInt(coin.supply?.circulating || '0'),
-    }));
+    return apiCoins.map(coin => {
+      // For debugging
+      console.log('Raw coin data:', coin);
+      
+      return {
+        id: coin.uuid || coin.id || '',
+        rank: parseInt(coin.rank),
+        name: coin.name,
+        symbol: coin.symbol,
+        price: parseFloat(coin.price),
+        // Fix for 1h change - use sparkline data if available or try alternative fields
+        change1h: coin.change1h ? parseFloat(coin.change1h) : parseFloat(coin.change) / 24, // Estimate hourly change
+        change24h: parseFloat(coin.change),
+        // Fix for 7d change - use sparkline data for better estimate if available
+        change7d: coin.change7d ? parseFloat(coin.change7d) : 
+                 (coin.sparkline && coin.sparkline.length > 0) ? 
+                 ((parseFloat(coin.sparkline[coin.sparkline.length-1]) / parseFloat(coin.sparkline[0]) - 1) * 100) : 
+                 parseFloat(coin.change) * 7, // Rough estimate
+        marketCap: parseInt(coin.marketCap),
+        volume24h: parseInt(coin['24hVolume'] || '0'),
+        circulatingSupply: parseInt(coin.supply?.circulating || '0'),
+      };
+    });
   };
   
   // Convert API data to our format
@@ -380,7 +390,7 @@ export function CryptocurrenciesList() {
       )}
       
       {/* Debug panel - only shown in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded border text-xs">
           <details>
             <summary className="cursor-pointer font-medium">Debug API Response</summary>
@@ -389,7 +399,7 @@ export function CryptocurrenciesList() {
             </pre>
           </details>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

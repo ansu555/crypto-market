@@ -97,6 +97,7 @@ function mapApiDataToCryptos(apiCoins: ApiCoin[]): Cryptocurrency[] {
     name: coin.name,
     symbol: coin.symbol,
     price: parseFloat(coin.price),
+    // Ensure change24h is correctly formatted
     change24h: parseFloat(coin.change),
     marketCap: parseInt(coin.marketCap),
     volume24h: parseInt(coin['24hVolume'] || '0'),

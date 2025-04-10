@@ -28,10 +28,21 @@ export function ExchangesList() {
   // For debugging
   console.log('Exchanges API Response:', exchanges);
 
+  // Define exchange type
+  interface Exchange {
+    id: string;
+    name: string;
+    country?: string | null;
+    image?: string;
+    trust_score?: number;
+    trade_volume_24h_btc: number;
+    year_established?: number | null;
+  }
+
   // Filter exchanges based on search term
   const filteredExchanges = exchanges 
     ? exchanges.filter(
-        (exchange) =>
+        (exchange: Exchange) =>
           exchange.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (exchange.country && exchange.country.toLowerCase().includes(searchTerm.toLowerCase()))
       )
@@ -79,7 +90,7 @@ export function ExchangesList() {
             </TableHeader>
             <TableBody>
               {paginatedExchanges.length > 0 ? (
-                paginatedExchanges.map((exchange, index) => (
+                paginatedExchanges.map((exchange: Exchange, index: number) => (
                   <TableRow key={exchange.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                     <TableCell>
@@ -182,7 +193,7 @@ export function ExchangesList() {
       )}
       
       {/* Debug panel - only in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded border text-xs">
           <details>
             <summary className="cursor-pointer font-medium">Debug API Response</summary>
@@ -191,7 +202,7 @@ export function ExchangesList() {
             </pre>
           </details>
         </div>
-      )}
+      )} */}
     </div>
   )
 }
