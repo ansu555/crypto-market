@@ -2,7 +2,7 @@
 
 CryptoMarket is a complete cryptocurrency tracking and information platform built with [Next.js](https://nextjs.org/), [TailwindCSS](https://tailwindcss.com/), and [Redux Toolkit](https://redux-toolkit.js.org/). It integrates various cryptocurrency APIs to display real-time data on coins, exchanges, and trends.
 
-![CryptoMarket Screenshot](./public/screenshot.png)
+[![Demo](https://drive.google.com/file/d/17wMyi6EvtKjt5kMgwZ56vpvhx8VrqPrR/view?usp=sharing)]
 
 ## Features
 
