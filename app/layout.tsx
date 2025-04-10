@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import BackgroundPaths from "@/components/animated-background";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "@/components/providers";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </Providers>
+        <SpeedInsights />
         <Analytics />
       </body>
     </html>
