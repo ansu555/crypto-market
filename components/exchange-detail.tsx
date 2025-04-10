@@ -1,55 +1,43 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ChevronRight, Globe, ExternalLink } from "lucide-react"
-
-// Mock data - would come from your Redux store in a real app
-const exchangeData = {
-  id: "binance",
-  name: "Binance",
-  url: "https://binance.com",
-  trustScore: 10,
-  volume24h: 12500000000,
-  markets: 1289,
-  country: "Global",
-  yearEstablished: 2017,
-  description:
-    "Binance is a global cryptocurrency exchange that provides a platform for trading more than 100 cryptocurrencies. Since early 2018, Binance has been considered the largest cryptocurrency exchange in the world in terms of trading volume.",
-  socials: {
-    twitter: "https://twitter.com/binance",
-    telegram: "https://t.me/binanceexchange",
-    facebook: "https://facebook.com/binance",
-  },
-}
-
-// Mock top markets data
-const topMarkets = [
-  { pair: "BTC/USDT", price: 57845.23, volume24h: 2100000000, volumePercentage: 16.8 },
-  { pair: "ETH/USDT", price: 3521.67, volume24h: 1500000000, volumePercentage: 12.0 },
-  { pair: "BNB/USDT", price: 452.32, volume24h: 980000000, volumePercentage: 7.8 },
-  { pair: "SOL/USDT", price: 102.45, volume24h: 750000000, volumePercentage: 6.0 },
-  { pair: "ADA/USDT", price: 0.58, volume24h: 420000000, volumePercentage: 3.4 },
-]
-
-// Mock fee structure
-const feeStructure = {
-  maker: 0.1,
-  taker: 0.1,
-  withdrawal: {
-    BTC: 0.0005,
-    ETH: 0.005,
-    USDT: 1,
-  },
-  discounts: "25% discount when paying with BNB",
-}
+import { useGetExchangeDetailsQuery } from "@/app/services/exchangeApi"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function ExchangeDetail({ id }: { id: string }) {
-  // This would fetch data based on the ID in a real app
-  const exchange = exchangeData
+  const { data: exchange, isLoading, error } = useGetExchangeDetailsQuery(id);
+  
+  console.log('Exchange details:', exchange);
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+  
+  if (error || !exchange) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold text-red-500 mb-4">Error Loading Exchange Data</h2>
+        <p className="text-muted-foreground mb-6">We couldn't retrieve data for this exchange.</p>
+        <Button asChild>
+          <Link href="/exchanges">Back to All Exchanges</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Extract social media links if available
+  const socials = {
+    twitter: exchange.twitter_handle ? `https://twitter.com/${exchange.twitter_handle}` : null,
+    facebook: exchange.facebook_url,
+    telegram: null, // CoinGecko doesn't provide Telegram links
+    reddit: exchange.reddit_url,
+  };
 
   return (
     <div>
@@ -67,12 +55,22 @@ export function ExchangeDetail({ id }: { id: string }) {
 
       <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-lg">
-            {exchange.name.substring(0, 2).toUpperCase()}
-          </div>
+          {exchange.image ? (
+            <img 
+              src={exchange.image} 
+              alt={exchange.name} 
+              className="w-12 h-12 rounded-full" 
+            />
+          ) : (
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-lg">
+              {exchange.name.substring(0, 2).toUpperCase()}
+            </div>
+          )}
           <div>
             <h1 className="text-3xl font-bold">{exchange.name}</h1>
-            <div className="text-muted-foreground">Established {exchange.yearEstablished}</div>
+            <div className="text-muted-foreground">
+              {exchange.year_established ? `Established ${exchange.year_established}` : 'Cryptocurrency Exchange'}
+            </div>
           </div>
         </div>
 
@@ -90,8 +88,11 @@ export function ExchangeDetail({ id }: { id: string }) {
             <CardTitle className="text-lg">Trust Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{exchange.trustScore}/10</div>
-            <div className="text-sm text-muted-foreground">Highly trusted</div>
+            <div className="text-3xl font-bold">{exchange.trust_score}/10</div>
+            <div className="text-sm text-muted-foreground">
+              {exchange.trust_score >= 8 ? 'Highly trusted' : 
+                exchange.trust_score >= 6 ? 'Trusted' : 'Average trust'}
+            </div>
           </CardContent>
         </Card>
 
@@ -100,8 +101,10 @@ export function ExchangeDetail({ id }: { id: string }) {
             <CardTitle className="text-lg">24h Volume</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold font-mono">${(exchange.volume24h / 1000000000).toFixed(1)}B</div>
-            <div className="text-sm text-muted-foreground">Across {exchange.markets} markets</div>
+            <div className="text-3xl font-bold font-mono">
+              ${(exchange.trade_volume_24h_btc * 28000 / 1000000000).toFixed(1)}B
+            </div>
+            <div className="text-sm text-muted-foreground">In Bitcoin equivalent volume</div>
           </CardContent>
         </Card>
 
@@ -110,8 +113,12 @@ export function ExchangeDetail({ id }: { id: string }) {
             <CardTitle className="text-lg">Location</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{exchange.country}</div>
-            <div className="text-sm text-muted-foreground">Operating since {exchange.yearEstablished}</div>
+            <div className="text-3xl font-bold">{exchange.country || 'Global'}</div>
+            <div className="text-sm text-muted-foreground">
+              {exchange.year_established 
+                ? `Operating since ${exchange.year_established}` 
+                : 'Cryptocurrency exchange'}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -120,7 +127,6 @@ export function ExchangeDetail({ id }: { id: string }) {
         <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="markets">Top Markets</TabsTrigger>
-          <TabsTrigger value="fees">Fees</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
         </TabsList>
 
@@ -131,7 +137,9 @@ export function ExchangeDetail({ id }: { id: string }) {
               <CardDescription>Key information about {exchange.name}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-6">{exchange.description}</p>
+              <p className="text-muted-foreground mb-6">
+                {exchange.description || `${exchange.name} is a cryptocurrency exchange based in ${exchange.country || 'multiple countries'}.`}
+              </p>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -139,32 +147,40 @@ export function ExchangeDetail({ id }: { id: string }) {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">24h Trading Volume</span>
-                      <span className="font-medium">${(exchange.volume24h / 1000000000).toFixed(1)}B</span>
+                      <span className="font-medium">
+                        ${(exchange.trade_volume_24h_btc * 28000 / 1000000000).toFixed(1)}B
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Available Markets</span>
-                      <span className="font-medium">{exchange.markets}</span>
+                      <span className="text-muted-foreground">Trust Rank</span>
+                      <span className="font-medium">#{exchange.trust_score_rank}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Year Established</span>
-                      <span className="font-medium">{exchange.yearEstablished}</span>
+                      <span className="font-medium">{exchange.year_established || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Country</span>
-                      <span className="font-medium">{exchange.country}</span>
+                      <span className="font-medium">{exchange.country || 'Global'}</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Top Trading Pairs</h3>
+                  <h3 className="text-lg font-medium mb-2">Features</h3>
                   <div className="space-y-2">
-                    {topMarkets.slice(0, 5).map((market, index) => (
-                      <div key={index} className="flex justify-between">
-                        <span className="text-muted-foreground">{market.pair}</span>
-                        <span className="font-medium">${(market.volume24h / 1000000000).toFixed(2)}B</span>
-                      </div>
-                    ))}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Has Trading Incentives</span>
+                      <span className="font-medium">{exchange.has_trading_incentive ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Centralized</span>
+                      <span className="font-medium">{exchange.centralized ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Trust Score Rank</span>
+                      <span className="font-medium">#{exchange.trust_score_rank}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -179,72 +195,15 @@ export function ExchangeDetail({ id }: { id: string }) {
               <CardDescription>Most active trading pairs on {exchange.name} by 24h volume</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Trading Pair</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Volume (24h)</TableHead>
-                    <TableHead className="text-right">Volume %</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topMarkets.map((market, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{market.pair}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        $
-                        {market.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-right">${(market.volume24h / 1000000000).toFixed(2)}B</TableCell>
-                      <TableCell className="text-right">{market.volumePercentage.toFixed(1)}%</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="fees">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fee Structure</CardTitle>
-              <CardDescription>Trading and withdrawal fees on {exchange.name}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Trading Fees</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Maker Fee</span>
-                      <span className="font-medium">{feeStructure.maker}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Taker Fee</span>
-                      <span className="font-medium">{feeStructure.taker}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Discounts</span>
-                      <span className="font-medium">{feeStructure.discounts}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Withdrawal Fees</h3>
-                  <div className="space-y-2">
-                    {Object.entries(feeStructure.withdrawal).map(([currency, fee]) => (
-                      <div key={currency} className="flex justify-between">
-                        <span className="text-muted-foreground">{currency}</span>
-                        <span className="font-medium">
-                          {fee} {currency}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="text-center py-10 text-muted-foreground">
+                <p>Detailed market data for {exchange.name} is not available in the free API.</p>
+                <p className="mt-2">Consider checking the exchange's official website for real-time market information.</p>
+                <Button className="mt-4" asChild variant="outline">
+                  <Link href={exchange.url} target="_blank" rel="noopener noreferrer">
+                    Visit {exchange.name}
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -258,7 +217,9 @@ export function ExchangeDetail({ id }: { id: string }) {
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-2">Description</h3>
-                <p className="text-muted-foreground">{exchange.description}</p>
+                <p className="text-muted-foreground">
+                  {exchange.description || `${exchange.name} is a cryptocurrency exchange based in ${exchange.country || 'multiple countries'}.`}
+                </p>
               </div>
 
               <div>
@@ -273,17 +234,19 @@ export function ExchangeDetail({ id }: { id: string }) {
                     <Globe className="h-4 w-4" />
                     Official Website
                   </Link>
-                  {Object.entries(exchange.socials).map(([platform, url]) => (
-                    <Link
-                      key={platform}
-                      href={url}
-                      className="flex items-center gap-2 text-primary hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                    </Link>
+                  {Object.entries(socials).map(([platform, url]) => (
+                    url && (
+                      <Link
+                        key={platform}
+                        href={url}
+                        className="flex items-center gap-2 text-primary hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                      </Link>
+                    )
                   ))}
                 </div>
               </div>
@@ -291,6 +254,59 @@ export function ExchangeDetail({ id }: { id: string }) {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Debug panel - only in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded border text-xs">
+          <details>
+            <summary className="cursor-pointer font-medium">Debug API Response</summary>
+            <pre className="mt-2 p-2 bg-black text-green-400 overflow-auto max-h-[400px]">
+              {JSON.stringify(exchange, null, 2) || "No data yet"}
+            </pre>
+          </details>
+        </div>
+      )}
     </div>
   )
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-3" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-3" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <div>
+            <Skeleton className="h-6 w-40 mb-1" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-36" />
+      </div>
+      
+      <div className="grid gap-6 md:grid-cols-3">
+        {[1, 2, 3].map(i => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-5 w-20" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-32 mb-2" />
+              <Skeleton className="h-4 w-24" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      <Skeleton className="h-10 w-64" />
+    </div>
+  );
 }
