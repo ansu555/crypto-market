@@ -34,7 +34,7 @@ import {
 
 // Define time ranges for chart
 const TIME_RANGES = {
-  "1D": "1d",
+  "1D": "24h", // Change from "1d" to "24h"
   "7D": "7d",
   "1M": "30d",
   "3M": "3m",
@@ -50,28 +50,45 @@ const socialIcons = {
 }
 
 // Helper function to format date
-const formatDate = (timestamp) => {
+const formatDate = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
   return date.toLocaleDateString();
 }
 
+// Define types for ChartContainer props
+interface ChartContainerProps {
+  children: React.ReactNode;
+  config: {
+    [key: string]: {
+      label: string;
+      color: string;
+    };
+  };
+}
+
 // Chart container with theme styling
-function ChartContainer({ children, config }) {
+function ChartContainer({ children, config }: ChartContainerProps) {
   return (
-    <div className="w-full h-full" style={{ '--chart-1': '221 83% 53%' }}>
+    <div className="w-full h-full" style={{ '--chart-1': '221 83% 53%' } as React.CSSProperties}>
       {children}
     </div>
   );
 }
 
 // Custom tooltip for the chart
-function ChartTooltipContent({ active, payload, label }) {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: string | number }>;
+  label?: string | number;
+}
+
+function ChartTooltipContent({ active, payload, label }: TooltipProps) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-background border rounded-lg shadow-sm p-3 text-sm">
         <p className="font-medium">{typeof label === 'number' ? formatDate(label) : label}</p>
         <p className="text-primary">
-          Price: ${parseFloat(payload[0].value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          Price: ${(typeof payload[0].value === 'string' ? parseFloat(payload[0].value) : payload[0].value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </p>
       </div>
     );
@@ -98,13 +115,18 @@ export function CryptoDetail({ id }: { id: string }) {
     coinId: id, 
     timePeriod: TIME_RANGES[timeRange] 
   });
+
+  // Add a useEffect to handle timeRange changes and debug the response
+  useEffect(() => {
+    console.log(`Fetching history for time period: ${TIME_RANGES[timeRange]}`);
+  }, [timeRange]);
   
   // For debugging
   console.log('Crypto Details:', crypto);
   console.log('History Data:', historyData);
 
   // Process chart data
-  const chartData = historyData?.history?.map(item => ({
+  const chartData = historyData?.history?.map((item: { timestamp: number; price: string }) => ({
     date: item.timestamp,
     price: parseFloat(item.price),
   })) || [];
@@ -407,7 +429,7 @@ export function CryptoDetail({ id }: { id: string }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {chartData.slice(0, 10).map((day, index) => (
+                  {chartData.slice(0, 10).map((day: { date: number; price: number }, index: number) => (
                     <TableRow key={day.date}>
                       <TableCell>{formatDate(day.date)}</TableCell>
                       <TableCell className="text-right font-mono">
@@ -465,7 +487,7 @@ export function CryptoDetail({ id }: { id: string }) {
                   )}
                   
                   {/* Add other links from API if available */}
-                  {crypto.links?.map((link, index) => (
+                  {crypto.links?.map((link: { url: string; type?: string; name?: string }, index: number) => (
                     <Link
                       key={index}
                       href={link.url}
@@ -485,7 +507,7 @@ export function CryptoDetail({ id }: { id: string }) {
                 <div>
                   <h3 className="text-lg font-medium mb-2">Social Media</h3>
                   <div className="grid gap-2">
-                    {crypto.socials.map((social, index) => (
+                    {crypto.socials.map((social: { url: string; type: string }, index: number) => (
                       <Link
                         key={index}
                         href={social.url}
@@ -493,7 +515,7 @@ export function CryptoDetail({ id }: { id: string }) {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {socialIcons[social.type.toLowerCase()] || <LinkIcon className="h-4 w-4" />}
+                        {socialIcons[social.type.toLowerCase() as keyof typeof socialIcons] || <LinkIcon className="h-4 w-4" />}
                         {social.type}
                       </Link>
                     ))}
