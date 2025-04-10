@@ -11,9 +11,9 @@ export function MarketOverview() {
   const { data: stats, isFetching, error } = useGetStatsQuery({});
   
   // For debugging
-  console.log('Stats API Response:', stats);
-  console.log('Stats Loading:', isFetching);
-  console.log('Stats Error:', error);
+  // console.log('Stats API Response:', stats);
+  // console.log('Stats Loading:', isFetching);
+  // console.log('Stats Error:', error);
 
   const isLoading = isFetching || !stats;
 
