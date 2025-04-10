@@ -7,68 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowDown, ArrowUp, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-// Mock data - would come from your Redux store in a real app
-const topCryptos = [
-  {
-    id: "bitcoin",
-    rank: 1,
-    name: "Bitcoin",
-    symbol: "BTC",
-    price: 57832.41,
-    change24h: 2.34,
-    marketCap: 1120000000000,
-    volume24h: 32500000000,
-    sparkline: [56000, 57000, 56800, 57200, 57800],
-  },
-  {
-    id: "ethereum",
-    rank: 2,
-    name: "Ethereum",
-    symbol: "ETH",
-    price: 3521.67,
-    change24h: 1.56,
-    marketCap: 420000000000,
-    volume24h: 18700000000,
-    sparkline: [3450, 3480, 3500, 3490, 3520],
-  },
-  {
-    id: "binancecoin",
-    rank: 3,
-    name: "Binance Coin",
-    symbol: "BNB",
-    price: 452.32,
-    change24h: -0.78,
-    marketCap: 75000000000,
-    volume24h: 2100000000,
-    sparkline: [455, 453, 450, 451, 452],
-  },
-  {
-    id: "solana",
-    rank: 4,
-    name: "Solana",
-    symbol: "SOL",
-    price: 102.45,
-    change24h: 5.67,
-    marketCap: 42000000000,
-    volume24h: 3400000000,
-    sparkline: [97, 98, 100, 101, 102],
-  },
-  {
-    id: "cardano",
-    rank: 5,
-    name: "Cardano",
-    symbol: "ADA",
-    price: 0.58,
-    change24h: -1.23,
-    marketCap: 20500000000,
-    volume24h: 980000000,
-    sparkline: [0.59, 0.58, 0.57, 0.58, 0.58],
-  },
-]
+import { useGetCryptosQuery } from "@/app/services/cryptoApi"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function TopCryptocurrencies() {
   const [view, setView] = useState<"table" | "cards">("table")
+  const { data: cryptosList, isFetching, error } = useGetCryptosQuery(5); // Fetch top 5 cryptocurrencies
+  
+  // Add these debug logs
+  console.log('API Response:', cryptosList);
+  console.log('Loading state:', isFetching);
+  console.log('Error:', error);
+  
+  const isLoading = isFetching || !cryptosList;
 
   return (
     <section className="mb-10">
@@ -84,7 +35,21 @@ export function TopCryptocurrencies() {
         </div>
       </div>
 
-      {view === "table" ? <CryptoTable cryptos={topCryptos} /> : <CryptoCards cryptos={topCryptos} />}
+      {error ? (
+        <div className="text-center p-6 text-red-500">
+          Error loading cryptocurrency data. Please try again later.
+        </div>
+      ) : isLoading ? (
+        <LoadingSkeleton view={view} />
+      ) : (
+        <>
+          {view === "table" ? (
+            <CryptoTable cryptos={mapApiDataToCryptos(cryptosList.coins)} />
+          ) : (
+            <CryptoCards cryptos={mapApiDataToCryptos(cryptosList.coins)} />
+          )}
+        </>
+      )}
 
       <div className="mt-6 text-center">
         <Button asChild variant="outline">
@@ -98,7 +63,117 @@ export function TopCryptocurrencies() {
   )
 }
 
-function CryptoTable({ cryptos }: { cryptos: typeof topCryptos }) {
+// Define types for our cryptocurrency data
+interface Cryptocurrency {
+  id: string;
+  rank: number;
+  name: string;
+  symbol: string;
+  price: number;
+  change24h: number;
+  marketCap: number;
+  volume24h: number;
+  sparkline: number[];
+}
+
+interface ApiCoin {
+  uuid?: string;
+  id?: string;
+  rank: string;
+  name: string;
+  symbol: string;
+  price: string;
+  change: string;
+  marketCap: string;
+  '24hVolume'?: string;
+  sparkline?: string[];
+}
+
+// Helper function to map API data to our component's expected format
+function mapApiDataToCryptos(apiCoins: ApiCoin[]): Cryptocurrency[] {
+  return apiCoins?.map(coin => ({
+    id: coin.uuid || coin.id || '',
+    rank: parseInt(coin.rank),
+    name: coin.name,
+    symbol: coin.symbol,
+    price: parseFloat(coin.price),
+    change24h: parseFloat(coin.change),
+    marketCap: parseInt(coin.marketCap),
+    volume24h: parseInt(coin['24hVolume'] || '0'),
+    sparkline: coin.sparkline?.map((price: string) => parseFloat(price)) || [],
+  })) || [];
+}
+
+function LoadingSkeleton({ view }: { view: "table" | "cards" }) {
+  return view === "table" ? (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[80px]">Rank</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead className="text-right">Price</TableHead>
+            <TableHead className="text-right">24h %</TableHead>
+            <TableHead className="text-right hidden md:table-cell">Market Cap</TableHead>
+            <TableHead className="text-right hidden md:table-cell">Volume (24h)</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <TableRow key={i}>
+              <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Skeleton className="h-8 w-8 rounded-full mr-3" />
+                  <div>
+                    <Skeleton className="h-4 w-20 mb-1" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+              <TableCell className="text-right hidden md:table-cell"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+              <TableCell className="text-right hidden md:table-cell"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  ) : (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Card key={i} className="overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center">
+  <Skeleton className="h-8 w-8 rounded-full mr-3" />
+  <div>
+    <Skeleton className="h-4 w-20 mb-1" />
+    <Skeleton className="h-3 w-10" />
+  </div>
+</div>
+              <Skeleton className="h-4 w-6" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-end">
+              <div>
+                <Skeleton className="h-6 w-24 mb-1" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+          <div>
+            <Skeleton className="h-4 w-16" />
+          </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function CryptoTable({ cryptos }: { cryptos: Cryptocurrency[] }) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -130,9 +205,9 @@ function CryptoTable({ cryptos }: { cryptos: typeof topCryptos }) {
                   </div>
                 </Link>
               </TableCell>
-              <TableCell className="text-right font-mono">
-                ${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </TableCell>
+<TableCell className="text-right font-mono">
+  ${crypto.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+</TableCell>
               <TableCell className={cn("text-right", crypto.change24h >= 0 ? "text-green-500" : "text-red-500")}>
                 <div className="flex items-center justify-end">
                   {crypto.change24h >= 0 ? (
@@ -157,7 +232,7 @@ function CryptoTable({ cryptos }: { cryptos: typeof topCryptos }) {
   )
 }
 
-function CryptoCards({ cryptos }: { cryptos: typeof topCryptos }) {
+function CryptoCards({ cryptos }: { cryptos: Cryptocurrency[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {cryptos.map((crypto) => (
