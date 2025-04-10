@@ -1,12 +1,12 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';   
 
 const cryptoNewsHeaders = {
-  'x-rapidapi-key': '71ba89d300msh7c1322da7df8e3ep1860a2jsn328d060f494f',
-  'x-rapidapi-host': 'news-api65.p.rapidapi.com'
+  'x-rapidapi-key': process.env.NEXT_PUBLIC_RAPID_API_KEY,
+  'x-rapidapi-host': process.env.NEXT_PUBLIC_NEWS_API_HOST
 }
 
 // Set the base URL to the root API path
-const baseUrl = 'https://news-api65.p.rapidapi.com';
+const baseUrl = process.env.NEXT_PUBLIC_NEWS_API_URL;
 
 const createRequest = (url) => ({ url, headers: cryptoNewsHeaders });
 
