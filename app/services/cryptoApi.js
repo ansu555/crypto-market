@@ -22,7 +22,11 @@ export const cryptoApi = createApi({
             query: (count) => `/coins?limit=${count || 10}`,
             transformResponse: (response) => response.data,
         }),
+        getStats: builder.query({
+            query: () => '/stats',
+            transformResponse: (response) => response.data,
+        }),
     }),
 })
 
-export const { useGetCryptosQuery } = cryptoApi;
+export const { useGetCryptosQuery, useGetStatsQuery } = cryptoApi;
