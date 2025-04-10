@@ -49,83 +49,29 @@ const socialIcons = {
   github: <Github className="h-4 w-4" />,
 }
 
-// Define types for chart and data
-interface ChartItem {
-  date: number;
-  price: number;
-}
-
-interface ChartConfig {
-  price: {
-    label: string;
-    color: string;
-  };
-}
-
-interface SocialLink {
-  type: string;
-  url: string;
-}
-
-interface Link {
-  type?: string;
-  name?: string;
-  url: string;
-}
-
-// Define Crypto type
-interface Crypto {
-  name: string;
-  symbol: string;
-  price: string;
-  change: string;
-  marketCap: string;
-  rank: string;
-  "24hVolume": string;
-  supply?: {
-    circulating: string;
-    total: string;
-    max: string;
-  };
-  allTimeHigh?: {
-    price: string;
-    timestamp: number;
-  };
-  description?: string;
-  websiteUrl?: string;
-  links?: Link[];
-  socials?: SocialLink[];
-}
-
-type TooltipProps = {
-  active?: boolean;
-  payload?: Array<{value: string | number}>;
-  label?: string | number;
-}
-
 // Helper function to format date
-const formatDate = (timestamp: number): string => {
+const formatDate = (timestamp) => {
   const date = new Date(timestamp * 1000);
   return date.toLocaleDateString();
 }
 
 // Chart container with theme styling
-function ChartContainer({ children, config }: { children: React.ReactNode, config: ChartConfig }) {
+function ChartContainer({ children, config }) {
   return (
-    <div className="w-full h-full" style={{ '--chart-1': '221 83% 53%' } as React.CSSProperties}>
+    <div className="w-full h-full" style={{ '--chart-1': '221 83% 53%' }}>
       {children}
     </div>
   );
 }
 
 // Custom tooltip for the chart
-function ChartTooltipContent({ active, payload, label }: TooltipProps) {
+function ChartTooltipContent({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
       <div className="bg-background border rounded-lg shadow-sm p-3 text-sm">
         <p className="font-medium">{typeof label === 'number' ? formatDate(label) : label}</p>
         <p className="text-primary">
-          Price: ${parseFloat(payload[0].value.toString()).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          Price: ${parseFloat(payload[0].value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </p>
       </div>
     );
@@ -271,6 +217,22 @@ export function CryptoDetail({ id }: { id: string }) {
           <CardContent>
             <div className="text-3xl font-bold font-mono">
               ${(parseFloat(crypto["24hVolume"]) / 1000000000).toFixed(1)}B
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {((parseFloat(crypto["24hVolume"]) / parseFloat(crypto.marketCap)) * 100).toFixed(2)}% of market cap
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="overview" className="mb-8">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="markets">Markets</TabsTrigger>
+          <TabsTrigger value="historical">Historical Data</TabsTrigger>
+          <TabsTrigger value="about">About</TabsTrigger>
+        </TabsList>
+
         <TabsContent value="overview">
           <Card>
             <CardHeader>
@@ -281,8 +243,8 @@ export function CryptoDetail({ id }: { id: string }) {
                     <Button
                       key={range}
                       variant={timeRange === range ? "default" : "outline"}
-                      onClick={() => setTimeRange(range)}
                       size="sm"
+                      onClick={() => setTimeRange(range)}
                     >
                       {range}
                     </Button>
@@ -296,6 +258,7 @@ export function CryptoDetail({ id }: { id: string }) {
                 </span>
                 <span className="mx-2">in the last {timeRange}</span>
               </CardDescription>
+            </CardHeader>
             <CardContent>
               <div className="h-[400px]">
                 <ChartContainer
@@ -317,23 +280,8 @@ export function CryptoDetail({ id }: { id: string }) {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis 
                         dataKey="date" 
-                        tickFormatter={formatDate}
-                        domain={['auto', 'auto']}
-                      />
-                      <YAxis 
-                        domain={['auto', 'auto']} 
-                        tickFormatter={(value) => `$${value.toLocaleString()}`} 
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                          <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis 
-                        dataKey="date" 
                         tickFormatter={formatDate} 
-                      <ChartTooltip content={<ChartTooltipContent active={false} payload={[]} label="" />} />
+                        minTickGap={30} 
                         domain={['auto', 'auto']}
                       />
                       <YAxis 
@@ -404,13 +352,50 @@ export function CryptoDetail({ id }: { id: string }) {
                       <div className="font-medium">${parseFloat(crypto.allTimeHigh?.price || '0').toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       <div className="text-sm text-muted-foreground">{crypto.allTimeHigh?.timestamp ? formatDate(crypto.allTimeHigh.timestamp) : "N/A"}</div>
                     </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Price Change (24h)</span>
+                    <span className={cn("font-medium", parseFloat(crypto.change) >= 0 ? "text-green-500" : "text-red-500")}>
+                      {parseFloat(crypto.change) >= 0 ? "+" : ""}{parseFloat(crypto.change)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Trading Volume (24h)</span>
+                    <span className="font-medium">${(parseFloat(crypto["24hVolume"]) / 1000000000).toFixed(2)}B</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Market Cap Rank</span>
+                    <span className="font-medium">#{crypto.rank}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="markets">
           <Card>
             <CardHeader>
               <CardTitle>Markets</CardTitle>
+              <CardDescription>
+                {crypto.name} is traded on multiple exchanges with a total 24h volume of $
+                {(parseFloat(crypto["24hVolume"]) / 1000000000).toFixed(1)}B
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-10 text-muted-foreground">
+                <p>Detailed market data for {crypto.name} is not available in the API.</p>
+                <p className="mt-2">Consider checking cryptocurrency exchanges for real-time market information.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="historical">
+          <Card>
+            <CardHeader>
+              <CardTitle>Historical Data</CardTitle>
+              <CardDescription>Price history for {crypto.name}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -449,11 +434,38 @@ export function CryptoDetail({ id }: { id: string }) {
             </CardContent>
           </Card>
         </TabsContent>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-                  {crypto.links?.map((link: Link, index: number) => (
+        <TabsContent value="about">
+          <Card>
+            <CardHeader>
+              <CardTitle>About {crypto.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Description</h3>
+                <div 
+                  className="text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: crypto.description || 'No description available.' }}
+                />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-2">Links</h3>
+                <div className="grid gap-2">
+                  {crypto.websiteUrl && (
+                    <Link
+                      href={crypto.websiteUrl}
+                      className="flex items-center gap-2 text-primary hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Globe className="h-4 w-4" />
+                      Website
+                    </Link>
+                  )}
+                  
+                  {/* Add other links from API if available */}
+                  {crypto.links?.map((link, index) => (
                     <Link
                       key={index}
                       href={link.url}
@@ -463,122 +475,49 @@ export function CryptoDetail({ id }: { id: string }) {
                     >
                       <LinkIcon className="h-4 w-4" />
                       {link.type || link.name || 'Resource'}
-        </TabsContent>
-        
-        <TabsContent value="historical">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historical Data</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Change</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {chartData.slice(0, 10).map((day, index) => (
-                    <TableRow key={day.date}>
-                      <TableCell>{formatDate(day.date)}</TableCell>
-                      <TableCell className="text-right font-mono">
-                        ${day.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {index < chartData.length - 1 ? (
-                          <span
-                            className={cn(
-                              day.price >= chartData[index + 1].price ? "text-green-500" : "text-red-500"
-                            )}
-                          >
-                            {day.price >= chartData[index + 1].price ? "+" : ""}
-                            {(((day.price - chartData[index + 1].price) / chartData[index + 1].price) * 100).toFixed(2)}%
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </TableCell>
-                    </TableRow>
+                    </Link>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="about">
-          <Card>
-            <CardHeader>
-              <CardTitle>About {crypto.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {crypto.description && (
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Description</h3>
-                    <p className="text-muted-foreground">{crypto.description}</p>
-                  </div>
-                )}
-                
+                </div>
+              </div>
+
+              {/* Social media links if available */}
+              {crypto.socials && crypto.socials.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Links</h3>
+                  <h3 className="text-lg font-medium mb-2">Social Media</h3>
                   <div className="grid gap-2">
-                    {crypto.websiteUrl && (
-                      <Link
-                        href={crypto.websiteUrl}
-                        className="flex items-center gap-2 text-primary hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Globe className="h-4 w-4" />
-                        Website
-                      </Link>
-                    )}
-                    
-                    {crypto.links?.map((link: Link, index: number) => (
+                    {crypto.socials.map((social, index) => (
                       <Link
                         key={index}
-                        href={link.url}
+                        href={social.url}
                         className="flex items-center gap-2 text-primary hover:underline"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <LinkIcon className="h-4 w-4" />
-                        {link.type || link.name || 'Resource'}
+                        {socialIcons[social.type.toLowerCase()] || <LinkIcon className="h-4 w-4" />}
+                        {social.type}
                       </Link>
                     ))}
                   </div>
                 </div>
-
-                {/* Social media links if available */}
-                {crypto.socials && crypto.socials.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Social Media</h3>
-                    <div className="grid gap-2">
-                      {crypto.socials.map((social, index) => (
-                        <Link
-                          key={index}
-                          href={social.url}
-                          className="flex items-center gap-2 text-primary hover:underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {socialIcons[social.type.toLowerCase() as keyof typeof socialIcons] || <LinkIcon className="h-4 w-4" />}
-                          {social.type}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Debug panel - only shown in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded border text-xs">
+          <details>
+            <summary className="cursor-pointer font-medium">Debug Crypto Details Response</summary>
+            <pre className="mt-2 p-2 bg-black text-green-400 overflow-auto max-h-[400px]">
+              {JSON.stringify(crypto, null, 2) || "No data yet"}
+            </pre>
+          </details>
+        </div>
+      )}
     </div>
-  );
+  )
 }
 
 function LoadingSkeleton() {
